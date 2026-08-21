@@ -1,14 +1,25 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export default function AdminPage() {
+  const [supabase, setSupabase] = useState(null);
   const [appointments, setAppointments] = useState([]);
 
-  const fetchTodayAppointments = async () => {
-    await supabase.rpc('auto_drop_expired_tokens');
+  useEffect(() => {
+    const client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    );
+    setSupabase(client);
+  }, []);
+
+  const fetchTodayAppointments = async (client) => {
+    const db = client || supabase;
+    if (!db) return;
+    await db.rpc('auto_drop_expired_tokens');
     
-    const { data } = await supabase
+    const { data } = await db
       .from('appointments')
       .select('*')
       .order('token_number', { ascending: true });
@@ -16,11 +27,16 @@ export default function AdminPage() {
   };
 
   const updateStatus = async (id, status) => {
+    if (!supabase) return;
     await supabase.from('appointments').update({ status }).eq('id', id);
     fetchTodayAppointments();
   };
 
-  useEffect(() => { fetchTodayAppointments(); }, []);
+  useEffect(() => {
+    if (supabase) {
+      fetchTodayAppointments(supabase);
+    }
+  }, [supabase]);
 
   return (
     <div style={{ maxWidth: '800px', margin: '20px auto', padding: '20px', fontFamily: 'sans-serif' }}>
