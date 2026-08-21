@@ -1,8 +1,9 @@
 'use client';
-import { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
 export default function BookingPage() {
+  const [supabase, setSupabase] = useState(null);
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [date, setDate] = useState('');
@@ -10,8 +11,18 @@ export default function BookingPage() {
   const [token, setToken] = useState(null);
   const [history, setHistory] = useState([]);
 
+  useEffect(() => {
+    const client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    );
+    setSupabase(client);
+  }, []);
+
   const handleBooking = async (e) => {
     e.preventDefault();
+    if (!supabase) return;
+
     const { data, error } = await supabase
       .from('appointments')
       .insert([{ patient_name: name, mobile_number: mobile, appointment_date: date, slot }])
@@ -25,6 +36,7 @@ export default function BookingPage() {
   };
 
   const fetchHistory = async (phone) => {
+    if (!supabase) return;
     const { data } = await supabase
       .from('appointments')
       .select('*')
