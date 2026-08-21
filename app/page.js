@@ -1,9 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function BookingPage() {
-  const [supabase, setSupabase] = useState(null);
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [date, setDate] = useState('');
@@ -11,17 +10,9 @@ export default function BookingPage() {
   const [token, setToken] = useState(null);
   const [history, setHistory] = useState([]);
 
-  useEffect(() => {
-    const client = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-    );
-    setSupabase(client);
-  }, []);
-
   const handleBooking = async (e) => {
     e.preventDefault();
-    if (!supabase) return;
+    if (!supabase) return alert('Supabase client not initialized. Check Vercel environment variables.');
 
     const { data, error } = await supabase
       .from('appointments')
